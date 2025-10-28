@@ -1,6 +1,6 @@
 from playwright.sync_api import sync_playwright
 
-def run_test():
+def run_test(keyword: str) -> bool:
     with sync_playwright() as p:
         # browser = p.chromium.launch(headless=False)
         browser = p.firefox.launch(headless=False)
@@ -25,7 +25,7 @@ def run_test():
             if not search_field.is_visible():
                 raise Exception("Search box not visible")
             
-            search_field.fill("blue shirt")
+            search_field.fill(keyword)
             print("➡️  Fill search box:", search_field.input_value())
             
             # Click Go button
@@ -47,14 +47,17 @@ def run_test():
        
         except Exception as e:
             print("❌ Error:", e)
+            return False # Search failed
 
-def execute(max_entries = 3):
+def execute(keyword: str, max_entries = 3):
     for attempt in range(max_entries):
         print(f"--- Attempt {attempt + 1} of {max_entries} ---")
-        success = run_test()
+        success = run_test(keyword)
 
         if success:
             break
 
 if __name__ == "__main__":
-    execute(5)
+    keyword = input("Enter search keyword: ")
+    print(f"Searching Amazon for: {keyword}\n")
+    execute(keyword, 5)
