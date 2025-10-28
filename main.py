@@ -2,7 +2,18 @@ from playwright.sync_api import sync_playwright
 from llm_model import run_llm_model
 import os
 
+
 def run_test(keyword: str) -> bool:
+    """
+    Automates a browser search on Amazon using Playwright.
+
+    Args:
+        keyword (str): The product name or search term.
+
+    Returns:
+        bool: True if the search completes successfully, False otherwise.
+    """
+
     browser_name = os.getenv("BROWSER", "chromium")  # default to chrome if not set
     with sync_playwright() as p:
         browser = getattr(p, browser_name).launch(headless=False)
@@ -61,23 +72,52 @@ def run_test(keyword: str) -> bool:
             return False # Search failed
 
 def execute(keyword: str, max_entries = 3):
+    """
+    Repeatedly runs the Amazon search test until success or attempts are exhausted.
+
+    Args:
+        keyword (str): The product name or search term to test.
+        max_entries (int, optional): Maximum number of retry attempts. Defaults to 3.
+
+    Returns:
+        None
+    """
+
     for attempt in range(max_entries):
         print(f"--- Attempt {attempt + 1} of {max_entries} ---")
         success = run_test(keyword)
-
         if success:
             break
 
 def execute_fixed_model():
+    """
+    Prompts the user for a search keyword and runs the Amazon search test.
+    """
+        
     keyword = input("Enter search keyword: ")
     print(f"Searching Amazon for: {keyword}\n")
     execute(keyword)
 
 def execute_llm_model():
+    """
+    Prompts the user for a search goal and runs the LLM-based automation.
+
+    Asks for a natural language goal (e.g., "find the cheapest blue shirt")
+    and passes it to `run_llm_model()` for processing.
+    """
+
     goal = input("Enter search goal (e.g. find the cheapest blue shirt): ")
     run_llm_model(goal)
 
 if __name__ == "__main__":
+    """
+    Entry point of the program.
+
+    Prompts the user to select between:
+    1. The fixed model (manual keyword search)
+    2. The LLM model (AI-driven goal-based search)
+    """
+        
     selecter = input("Select search model (1=Fixed model, 2=LLM): ").strip()
     match selecter: 
         case "1": execute_fixed_model(),
