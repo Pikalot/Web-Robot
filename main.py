@@ -1,9 +1,11 @@
 from playwright.sync_api import sync_playwright
+from llm_model import run_llm_model
+import os
 
 def run_test(keyword: str) -> bool:
+    browser_name = os.getenv("BROWSER", "chromium")  # default to chrome if not set
     with sync_playwright() as p:
-        # browser = p.chromium.launch(headless=False)
-        browser = p.firefox.launch(headless=False)
+        browser = getattr(p, browser_name).launch(headless=False)
         page = browser.new_page()
         
         try:
@@ -18,8 +20,8 @@ def run_test(keyword: str) -> bool:
 
             # Fill in search box
             # search_field = page.get_by_role("searchbox", name = "Search Amazon")            
-            search_field = page.get_by_label("Search Amazon")
-            # search_field = page.locator("#twotabsearchtextbox") # get by ID
+            # search_field = page.get_by_label("Search Amazon")
+            search_field = page.locator("#twotabsearchtextbox") # get by ID
             search_field.wait_for(state="visible", timeout=3000)
             
             if not search_field.is_visible():
@@ -31,16 +33,25 @@ def run_test(keyword: str) -> bool:
             # Click Go button
             page.click("#nav-search-submit-button")
             print("➡️  Click Go button")
-            print("====================================================================")
-
-            # Find the first product result, print title and price
-            # page.wait_for_selector("div[data-component-type='s-search-result']", timeout=10000)
+            
+            # Print results
+            print("\n====================================================================")
             page.wait_for_selector('div[role="listitem"][data-index="3"]', timeout=3000)
-            item = page.locator('div[role="listitem"][data-index="3"]')
-            title = item.locator("a h2 span").first.inner_text()
-            price = item.locator("span.a-price span.a-offscreen").first.inner_text()
-            print(f"✅ Success! Product {title} found")
-            print(f"✅ Price: {price}")
+            try:
+                item = page.locator('div[role="listitem"][data-index="3"]')
+                title = item.locator("a h2 span").first.inner_text(timeout = 1000)
+            except Exception:
+                title = None
+
+            try:
+                price_item = item.locator("span.a-price span.a-offscreen")
+                price_item.wait_for(state="visible", timeout=2000)
+                price = price_item.first.inner_text()
+            except Exception:
+                price = None
+
+            print(f"✅ Success! Product {title if title else 'not'} found")
+            print(f"✅ Price: {price if price else 'Price not available'}")
             print("====================================================================\n")
             
             return True # Search successful
@@ -57,7 +68,20 @@ def execute(keyword: str, max_entries = 3):
         if success:
             break
 
-if __name__ == "__main__":
+def execute_fixed_model():
     keyword = input("Enter search keyword: ")
     print(f"Searching Amazon for: {keyword}\n")
-    execute(keyword, 5)
+    execute(keyword)
+
+def execute_llm_model():
+    goal = input("Enter search goal (e.g. find the cheapest blue shirt): ")
+    run_llm_model(goal)
+
+if __name__ == "__main__":
+    selecter = input("Select search model (1=Fixed model, 2=LLM): ").strip()
+    match selecter: 
+        case "1": execute_fixed_model(),
+        case "2": execute_llm_model(),
+        case _: print("❌ Incorrect selection, terminate program.")
+    
+

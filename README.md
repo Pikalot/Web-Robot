@@ -19,6 +19,35 @@ pip install playwright
 playwright install
 ```
 
+**Install OpenAI**
+
+```
+pip install openai
+pip install python-dotenv
+```
+
+## Environment setup
+
+**Create a .env file in the project root:**
+
+```
+WEB-ROBOT/
+├── _pycache_/
+├── venv/
+├── .env
+├── .gitignore
+├── llm_model.py
+├── main.py
+└── README.md
+```
+
+**Inside your .env file, add:**
+
+```
+OPENAI_API_KEY=your_openai_api_key_here
+BROWSER=your_browser
+```
+
 ## How to run
 
 ```
